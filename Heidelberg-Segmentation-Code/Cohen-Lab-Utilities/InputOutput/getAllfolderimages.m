@@ -1,9 +1,19 @@
-function [imagesfile, fileID, n, paths] = getAllfolderimages(x, file, file_path)
-% Returns all images files specified at x in image struct
-imagefilesPatient1 = dir(x);      
+function [imagesfile, fileID, n, paths] = getAllfolderimages(directory, file, file_path)
+% Returns all images files specified at directory in image struct
+% Inputs
+%   Directory path
+%   file name
+%   file path
+% Outputs
+%    cell array of images 
+%    fileId
+%    Number of files
+%    set of paths to all images
+
+imagefilesPatient1 = dir(directory);      
 nfiles = length(imagefilesPatient1);    % Number of files found
 images = [];
-x = nfiles;
+directory = nfiles;
 
 % open file;
 fileID = fopen(file, 'w');
@@ -16,7 +26,6 @@ for ii=1:nfiles
    fprintf(fileID, '%s\n',currentfilename); 
    fprintf(filePaths, '%s\n',currentfolder); 
    fullFileName = fullfile(imagefilesPatient1(ii).folder, currentfilename);
-   %currentimage = gpuArray(imcrop(imread(fullFileName), [2.51, 134.51, 509.98, 238.98]));
    currentimage = gpuArray(imread(fullFileName));
 
    I = mat2gray(currentimage);
@@ -26,5 +35,5 @@ end
 imagesfile = imageset;
 fclose(fileID);
 fclose(filePaths);
-n = x;
+n = directory;
 end

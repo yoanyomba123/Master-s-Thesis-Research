@@ -12,24 +12,152 @@ FILENAME = 'filenames.list';
 FILEPATH = 'paths.txt';
 FILTER_OP = 'filter';
 
+%%
+ImageData = getAllImagesc();
+
+for i = 3:size(ImageData,1)
+   for j = 1: size(ImageData, 2)
+      images = ImageData{i, j}; 
+      % Read BScans as a volume 
+      BScans_stack{i-2, j} = Convert_to3d(images);
+   end
+end
+
+% Load Parameters
+PARAMETER_FILENAME = 'octseg.param';
+med_params = loadParameters('MEDLINELIN', PARAMETER_FILENAME);
+onh_params = loadParameters('ONH', PARAMETER_FILENAME);
+rpe_params = loadParameters('RPELIN', PARAMETER_FILENAME);
+bv_params = loadParameters('BV', PARAMETER_FILENAME);
+infl_params = loadParameters('INFL', PARAMETER_FILENAME);
+inner_params = loadParameters('INNERLIN', PARAMETER_FILENAME);
+onfl_params = loadParameters('ONFLLIN', PARAMETER_FILENAME);
+%% Process all 3D volumetric images and acquire all layers
+for i = 1:1%size(BScans_stack, 2)
+    for j = 1:size(BScans_stack,1)
+      BScans_UF = BScans_stack{j,i}; 
+      BScans_UF = imagePreprocessing(BScans_UF);
+      medlinevol = segmentMedlineVolume(BScans_UF, med_params);
+      rpelinevol = segmentRPEVolume(BScans_UF, rpe_params, medlinevol);
+
+      % Segment onh line
+      [onh, onhCenter, onhRadius] = segmentONHVolume(BScans_UF, onh_params, rpelinevol);
+
+      % extract infl layer present in the image
+      infllinevol = segmentINFLVolume(BScans_UF, infl_params, onh, rpelinevol, medlinevol);
+      bvlinevol = segmentBVVolume(BScans_UF, bv_params,onh, rpelinevol);
+        
+      [ipl,opl,icl] = SegmentInnnerStack(BScans_UF,rpelinevol, infllinevol, medlinevol,bvlinevol, inner_params);
+
+      % segment onfl line
+      [onfl] = SegmentONflStack(BScans_UF,infllinevol,ipl,icl,opl,bvlinevol,onfl_params);
+      
+      medlines{j,i} = medlinevol;
+      rpelines{j, i} = rpelinevol;
+      onhline{j,i} = onh;
+      inflines{j, i} = infllinevol;
+      bvlines{j,i} = bvlinevol;
+      iplines{j,i} = ipl;
+      oplines{j,i} = opl;
+      iclines{j,i} = icl;
+      onflined{j,i} = onfl;
+   end
+end
+
+%% Write the segmented and layer detected images to a folder
+order = 1;
+% generate a vertical border between image sets
+temp_image = gather(images{1});
+border = 255*ones(size(temp_image,1),5);
+
+% specify image dimensions for screen capture
+image_dimensions = [1.51, 0.51, 1.008, 0.4790];
+
+for i = 1:size(inflines,2)
+    for j = 1:2%size(inflines, 1)
+        % specify image path
+        switch(i)
+            case 1
+                path = strcat(pwd, '\OCT-Images\NORM\');
+                norm_folder_path = strcat('NORM', num2str(j));
+                norm_folder_path = strcat(norm_folder_path, '\');
+                norm_folder_path = strcat(path,norm_folder_path); 
+                mkdir(norm_folder_path);
+                path = norm_folder_path;
+            case 2
+                path = strcat(pwd, '\OCT-Images\AMD\');
+                amd_folder_path = strcat('AMD', num2str(j));
+                amd_folder_path = strcat(amd_folder_path, '\');
+                amd_folder_path = strcat(path,amd_folder_path); 
+                mkdir(amd_folder_path);
+                path = amd_folder_path;
+            case 3
+                path = strcat(pwd, '\OCT-Images\DME\');
+                dme_folder_path = strcat('DME', num2str(j));
+                dme_folder_path = strcat(dme_folder_path, '\');
+                dme_folder_path = strcat(path,dme_folder_path); 
+                mkdir(dme_folder_path);
+                path = dme_folder_path;
+        end
+        % acquire images
+        imagestack = BScans_stack{j, i};
+        inflvolume = inflines{j, i};
+        rpevolume = rpelines{j, i};
+        onhvolume = onhline{j,i}
+        bvvolume = bvlines{j,i};
+        iplvolume = iplines{j,i};
+        oplvolume = oplines{j,i};
+        iclvolume = iclines{j,i};
+        onflvolume = onflined{j,i};
+        
+        for k = 1:size(inflvolume, 1)
+            image_name = strcat(int2str(k), '.jpg'); 
+            filename = strcat(path, image_name);
+            curr_im = imagestack(:,:,k);
+            % crop image
+            %curr_im = imcrop(curr_im, dimensions);
+            % remove the white borders present within image
+            I_t = curr_im == 1;
+            I_t = bwareaopen(I_t, 100);
+            curr_im(I_t) = 0; 
+            
+            % visualize progress
+            figure; imshow([curr_im, border, curr_im]); hold on;
+            %plot(medlinevol(i, :), 'r', 'lineWidth', 0.5); hold on;
+            plot(rpevolume(k, :), 'b'); hold on;
+            plot(medfilt1(inflvolume(k, :),order), 'c');hold on;
+            plot(medfilt1(onflvolume(k, :),order), 'w'); hold on;
+            plot(medfilt1(iplvolume(k, :),order), 'r'); hold on;
+            plot(medfilt1(oplvolume(k, :),order), 'g'); hold on;
+            plot(medfilt1(iclvolume(k, :),order), 'y'); hold on;
+            drawnow
+
+            % take a screen capture of our images
+            screencapture(gcf,[], 'target', filename);
+        end 
+    end
+end
+hold off;
+
+%%
 % load in images
-[images, file, n, paths] = getAllfolderimages('C:/Users/undergrad/Desktop/Publication_Dataset/DME6/TIFFs/8bitTIFFs/*.tif', FILENAME, FILEPATH);
+[images, file, n, paths] = getAllfolderimages('C:/Users/undergrad/Desktop/Publication_Dataset/DME1/TIFFs/8bitTIFFs/*.tif', FILENAME, FILEPATH);
 
 % remove all empty cell arrary contents
 images = images(~cellfun('isempty', images));
 
 % Read BScans as a volume 
-BScans_UF = Convert_to3d( images);
+BScans_UF = Convert_to3d(images);
 
 % Obtained filtered bscans
 [Descriptors2.Header,Descriptors2.BScanHeader, slo2, BScans_F] = openOctListHelp(strcat('./',FILENAME), paths{1}, 'metawrite', FILTER_OP);
 dimensions = [5.51, 9.51, 501.98, 478.98];
 
-%% Obtain preprocess the unfiltered image
+% Obtain preprocess the unfiltered image
 BScans_UF = imagePreprocessing(BScans_UF);
 BScans_F = imagePreprocessing(BScans_F);
 
-%% Load Parameters
+% Load Parameters
 PARAMETER_FILENAME = 'octseg.param';
 med_params = loadParameters('MEDLINELIN', PARAMETER_FILENAME);
 onh_params = loadParameters('ONH', PARAMETER_FILENAME);
@@ -42,16 +170,16 @@ onfl_params = loadParameters('ONFLLIN', PARAMETER_FILENAME);
 
 %% Obtain the middle line present between the two largest components in OCT image
 % extract the median line between the two highest pixel intensity regions
- medlinevol = segmentMedlineVolume(BScans_UF, med_params);
+medlinevol = segmentMedlineVolume(BScans_UF, med_params);
  
 % visualize progress
-VisualizeMed(BScans_UF, medlinevol, 'med');
+%VisualizeMed(BScans_UF, medlinevol, 'med');
  
 % extract the rpe layer present in the image
 rpelinevol = segmentRPEVolume(BScans_UF, rpe_params, medlinevol);
 
 % visualize progress
-VisualizeMed(BScans_UF, rpelinevol, 'rpe');
+%VisualizeMed(BScans_UF, rpelinevol, 'rpe');
 
 % Segment onh line
 [onh, onhCenter, onhRadius] = segmentONHVolume(BScans_UF, onh_params, rpelinevol);
@@ -60,26 +188,52 @@ VisualizeMed(BScans_UF, rpelinevol, 'rpe');
 infllinevol = segmentINFLVolume(BScans_UF, infl_params, onh, rpelinevol, medlinevol);
 
 % visualize progress
-VisualizeMed(BScans_UF, infllinevol, 'infl');
+%VisualizeMed(BScans_UF, infllinevol, 'infl');
 
 % extract blood vessel regions
 bvlinevol = segmentBVVolume(BScans_UF, bv_params,onh, rpelinevol);
 
 % visualize progress
-VisualizeMed(BScans_UF, bvlinevol, 'bv');
+%VisualizeMed(BScans_UF, bvlinevol, 'bv');
 
 % segment inner line
-[ipl,opl, icl] = SegmentInnnerStack(BScans_UF,rpelinevol, infllinevol, medlinevol,bvlinevol, inner_params)
+[ipl,opl,icl] = SegmentInnnerStack(BScans_UF,rpelinevol, infllinevol, medlinevol,bvlinevol, inner_params);
 
 % segment onfl line
 [onfl] = SegmentONflStack(BScans_UF,infllinevol,ipl,icl,opl,bvlinevol,onfl_params);
-%%
-
-order = 120;
-figure;
+%% Visualize stacks in 3D
+order = 220;
+figure; mesh(medfilt1(rpelinevol',order));
+hold on; mesh(medfilt1(infllinevol',order));
+hold on; mesh(medfilt1(onfl',order));
+hold on; mesh(medfilt1(ipl', order));
+hold on; mesh(medfilt1(opl',order));
+hold on; mesh(medfilt1(icl',order));
+%% Visualization 
+order = 10;
 for i = 1:size(BScans_UF, 3)
-    imshow(BScans_UF(:,:,i)); hold on;
-%     plot(medlinevol(i, :), 'r'); hold on;
+    
+    % specify image path
+    path = strcat(pwd, '\OCT-Images\DME\');
+    path = strcat(path,int2str(i)); 
+    filename = strcat(path, '.JPG');
+    
+    % acquire images
+    curr_im = gather(images{i});
+    
+    % crop image
+    curr_im = imcrop(curr_im, dimensions);
+    % generate a vertical border between image sets
+    border = 255*ones(size(temp_image,1),5);
+    
+    % remove the white borders present within image
+    I_t = curr_im == 1;
+    I_t = bwareaopen(I_t, 100);
+    curr_im(I_t) = 0; 
+    
+    % visualize progress
+    figure; imshow([curr_im, border, curr_im]); hold on;
+    %plot(medlinevol(i, :), 'r', 'lineWidth', 0.5); hold on;
     plot(rpelinevol(i, :), 'b'); hold on;
     plot(medfilt1(infllinevol(i, :),order), 'c');hold on;
     plot(medfilt1(onfl(i, :),order), 'w'); hold on;
@@ -87,6 +241,9 @@ for i = 1:size(BScans_UF, 3)
     plot(medfilt1(opl(i, :),order), 'g'); hold on;
     plot(medfilt1(icl(i, :),order), 'y'); hold on;
     drawnow
+    
+    % take a screen capture of our images
+    screencapture(dimensions, 'target', filename);
 end
 hold off;
 

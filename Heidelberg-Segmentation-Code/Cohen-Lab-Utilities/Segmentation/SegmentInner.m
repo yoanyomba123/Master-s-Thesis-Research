@@ -1,4 +1,5 @@
 function [ipl,opl, icl] = SegmentInner(I,rpeline, infline, medline,bvlin, Params)
+% segments and detects the lines present in the ISG layer of an OCT image
 % 1) Normalize intensity values and align the image to the RPE
 bv = bvlin;
 rpe = round(rpeline);

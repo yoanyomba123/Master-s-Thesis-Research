@@ -39,7 +39,7 @@ border(:,:,2) = rpe;
 enface = createEnfaceView(volume, border);
 
 % remove all NAN values 
-%enface(isnan(enface))=1;
+enface(isnan(enface))=0;
 enface(enface > params.ONH_SEGMENT_ENFACETHRESHOLD * mean(mean(enface))) = 1;
 enface = 1 - enface;
 
@@ -51,8 +51,10 @@ enface = medfilt2(enface, params.ONH_SEGMENT_MEDFILT);
 enface = medfilt2(enface, params.ONH_SEGMENT_MEDFILT);
 
 enfaceMean2 = mean(enface, 2) ./ sum(mean(enface, 2));
+% enfaceMean2(isnan(enfaceMean2))=0;
 enfaceCP(1) = sum(enfaceMean2 .* (1:size(enface,1))');
 enfaceMean1 = mean(enface, 1) ./ sum(mean(enface, 1));
+% enfaceMean1(isnan(enfaceMean1))=0;
 enfaceCP(2) = sum(enfaceMean1 .* single(1:size(enface,2)));
 
 enfaceTH = enface > 0;
@@ -62,6 +64,11 @@ enfaceTH = bwmorph(enfaceTH, 'erode', params.ONH_SEGMENT_ERODENUMBER);
 onh = zeros(size(enface, 1), size(enface,2));
 onh =  logical(onh);
 onhOld = onh;
+
+if(isnan(enfaceCP(1))| isnan(enfaceCP(2)))
+   enfaceCP(1) = 10;
+   enfaceCP(2) = 10;
+end
 
 onh(round(enfaceCP(1)), round(enfaceCP(2))) = true;
 

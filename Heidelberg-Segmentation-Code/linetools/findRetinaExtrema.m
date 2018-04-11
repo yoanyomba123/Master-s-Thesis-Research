@@ -74,7 +74,6 @@ else
     if strcmp(mode, 'allregion')
         lt = extremafinder(smoothedFZ, c, 'abs pos', lineregion);
     else
-        disp(size(lineregion));
         lt = extremafinder(smoothedFZ, c, mode, lineregion);
     end
     lines = lt;

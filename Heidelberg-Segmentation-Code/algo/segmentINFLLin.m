@@ -41,8 +41,7 @@ snBScan = treshold(alignedBScan, 'ascanmax', [0.97 0.6]);
 
 % 3) Find the INFL in the upper region of the scan 
 linereg = [zeros(1, size(bscan,2), 'double') + 2; medline - PARAMS.INFL_MEDLINE_MINDISTABOVE];
-disp('size of linereg is the below value in segmentINFLIN\n')
-disp(size(linereg))
+
 inflAuto = findRetinaExtrema(snBScan, PARAMS, 1, 'max', ...
                             [zeros(1, size(bscan,2), 'double') + 2; medline - PARAMS.INFL_MEDLINE_MINDISTABOVE]);
                         
