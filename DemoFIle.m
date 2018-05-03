@@ -1,5 +1,5 @@
 clc; clear all; close all;
-image = getAllfolderimages('C:/Users/undergrad/Desktop/Publication_Dataset/DME6/TIFFs/8bitTIFFs/01.tif');
+image = getAllfolderimages('\bioimagefs.coe.drexel.edu\Raw\Images\Duke_Public_OCT_images\DME6\TIFFs\8bitTIFFs\01.tif');
 
 I = gather(image{1,2});
 I_orig = I;

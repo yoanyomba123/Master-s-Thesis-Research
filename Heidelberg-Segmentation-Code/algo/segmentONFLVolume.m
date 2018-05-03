@@ -46,7 +46,7 @@ additional = zeros(size(volume, 3), size(volume, 2), 'double');
 
 for i = 1:size(volume, 3)    
     [onflLin, additionalLin] = segmentONFLLin(volume(:,:,i), Params, onh(i, :), [bvAll(i,:); bvEn(i,:)], rpe(i,:), icl(i,:), ipl(i,:), infl(i,:));
-    
+
     onflAuto(i,:) = onflLin;
     additional(i,:) = additionalLin;
     

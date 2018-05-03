@@ -35,8 +35,11 @@ ipl = zeros(size(volume, 3), size(volume, 2), 'double');
 
 for i = 1:size(volume, 3)
     [iclLin, oplLin, iplLin] = segmentInnerLayersLin(volume(:,:,i), params, onh(i,:), rpe(i, :), infl(i, :), medline(i,:), bv(i,:));    
+ 
     icl(i,:) = iclLin;
+
     opl(i,:) = oplLin;
+
     ipl(i,:) = iplLin;
     disp(['Inner Layers of BScan ' num2str(i) ' segmented automatically in 2D.']);
 end

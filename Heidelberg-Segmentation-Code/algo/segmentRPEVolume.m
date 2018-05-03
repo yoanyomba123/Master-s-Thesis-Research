@@ -35,6 +35,7 @@ rpeMult = zeros(size(volume, 3), size(volume, 2), 3, 'double');
 % Step through the B-Scans for segmentation.
 for i = 1:size(volume, 3)
     [rpeLin, rpeMultLin] = segmentRPELin(volume(:,:,i), params, medline(i,:));
+    
     rpeAuto(i,:) = rpeLin;
     
     for n = 1:size(rpeMultLin, 1)
