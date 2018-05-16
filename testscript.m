@@ -7,9 +7,18 @@ end
 Bscans_UF = BScans_stack{6,1};
 
 %% extract Image of interest and apply filtration scheme
+% Raw Image
+
 I = BScans_UF(:,:,41);
 Iz = I;
 
+
+
+
+
+
+
+%%
 % remove any image outliers
 I_t = I== 1;
 I_t = bwareaopen(I_t, 100);

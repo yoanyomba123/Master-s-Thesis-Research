@@ -5,17 +5,12 @@
 clc; clear all; close all;
 
 % add all path
-addpath(genpath('./'));
-
+addpath(genpath('.'));
+addpath(genpath('D:\Yoan\Git\leverUtilities'));
+addpath(genpath(('D:\Yoan\Git\leverjs')));
 % compile c files to be used in anisotropic diffusion
 compile_c_files
-%%
-for i = 1:size(BScans_stack, 2)
-        for j = 1:size(BScans_stack,1)
-          BScans_UF = BScans_stack{j,i}; 
-          BScans_UF = imagePreprocessing(BScans_UF);
-        end
-end
+
 %% declare variables
 FILENAME = 'filenames.list';
 FILEPATH = 'paths.txt';
@@ -36,14 +31,13 @@ else
     end
     save -v7.3 imagedb.mat BScans_stack;
 end
-
-% num_iter = 4;
-% delta_t = 3/44;
-% kappa = 70;
-% option = 1;
-% voxel_spacing = ones(3,1);
-
-
+%% Load Parameters and preprocess the images for visualization purposes
+for i = 1:1%size(BScans_stack, 2)
+        for j = 1:size(BScans_stack,1)
+          BScans_UF = BScans_stack{j,i}; 
+          BScans_UF = imagePreprocessing(BScans_UF);
+        end
+end
 
 if(exist('./parameters/parameters.mat'))
     parameters = load('./parameters/parameters.mat');
@@ -68,6 +62,240 @@ else
     save -v7.3 ./parameters/parameters.mat med_params onh_params rpe_params bv_params infl_params ...
         inner_params onfl_params;
 end
+
+%% extract the middle and rpe line from the image
+BScans_UF = BScans_stack{5,2};
+BScans_PRO = imagePreprocessing(BScans_UF, "Complex");
+
+%%
+% figure;
+% for i = 1:size(BScans_UF, 3)
+%     I = BScans_UF(:,:, i);
+%     Ip = BScans_PRO(:,:,i);
+%     %imshow(Ip);
+%     middleline = medEstimation(I, med_params);
+%     repline =rpeEstimation(Ip, rpe_params, middleline);
+%     inflline = inflEstimation(Ip, infl_params, repline, middleline);
+%     bvline = segmentBVLin(Ip, bv_params, ones(3,3), repline);
+%     [opl, ipl, icl] = innerEstimation(Ip, inner_params, repline, inflline, middleline, bvline);
+%     imshow(I); hold on;
+%     plot(repline, 'y'); hold on;
+%     %plot(middleline, 'c'); hold on;
+%     plot(inflline, 'g'); hold on; 
+%     plot(double(bvline), 'r'); hold on;
+%     plot(opl, 'r'); hold on;
+%     plot(ipl, 'b'); hold on;
+%     plot(icl, 'w');
+%     drawnow();
+% 
+% %     med(i, :) = middleline;
+% %     rpe(i,:) = repline;
+% %     infl(i,:) = inflline;
+% %     opll(i, :) = opl;
+% %     ipll(i,:) = ipl;
+% %     icll(i,:) = icl;
+% end
+% strDB='D:\Yoan\DukeOCT\DME\DME1.LEVER';
+% 
+% conn = database(strDB, '','', 'org.sqlite.JDBC', 'jdbc:sqlite:');
+% 
+% CONSTANTS=Read.getConstants(conn);
+% 
+% im = MicroscopeData.Reader('imageData',CONSTANTS.imageData, 'chanList',1, ...
+%     'timeRange',[1 1],'outType','single','prompt',false);
+% sigma = 5;
+% type = "";
+% bw = dog3D(BScans_PRO, sigma, type);
+% idxPixels=find(bw);
+% imSize=size(bw);
+% bwn=zeros(imSize);
+% bwn(idxPixels)=1;
+% PAD=5;
+% % padd with extra zeros around the outside so our mesh covers boundaries
+% bpad = zeros(size(bwn)+10);
+% bpad(PAD+1:end-PAD,PAD+1:end-PAD,PAD+1:end-PAD)=bwn;
+% bwn = bpad;
+% % scale=[1,1,1];
+% scale=max(imSize)./imSize/8;
+% scale=max(min(scale,0.5),.01);
+% resize=round(scale.*size(bwn));
+% bwResize=imresize3(bwn,resize);
+% [faces,verts]=isosurface(bwResize,graythresh(bwResize));
+% if size(verts,1)<10
+%     resize=round(2*scale.*size(bwn));
+%     bwResize=imresize3(bwn,resize);
+%     [faces,verts]=isosurface(bwResize,graythresh(bwResize));
+% end
+% norms = isonormals(bwResize,verts);
+% % rescale verts back to 
+% unscale=(size(bwn)./size(bwResize));
+% % put unscale on x,y instead of r,c
+% unscale=[unscale(2),unscale(1),unscale(3)];
+% 
+% verts=(verts).*unscale-0.5*unscale;
+% edges=Segment.MakeEdges(faces);
+%  
+% % make edges and faces zero indexed
+% edges=edges-1;
+% faces=faces-1;
+% 
+% % subtract extract for padding
+% verts=verts-PAD;
+% maxRad = verts-repmat(mean(verts,1),size(verts,1),1);
+% maxRad=sum(abs(maxRad),2);
+% maxRad=max(maxRad);
+% newCell=[];
+% newCell.time=datetime('now');
+% newCell.centroid=[mean(verts,1)]-1;
+% newCell.edges=edges;
+% newCell.faces=faces;
+% newCell.verts=verts;
+% newCell.normals=norms;
+% xyzPts=[];
+% % note that xyzPts are on the correct range, as idxPixels is unpadded...
+% [xyzPts(:,2),xyzPts(:,1),xyzPts(:,3)]=ind2sub(imSize,idxPixels);
+% 
+% newCell.pts=uint16(xyzPts);
+% newCell.maxRadius=maxRad;
+% newCell.channel=1;
+% 
+% %strDB='d:\andy\3draw.LEVER';
+% strDB = 'D:\Yoan\DukeOCT\DME\DME1.LEVER';
+% AddSQLiteToPath();
+% conn = database(strDB, '','', 'org.sqlite.JDBC', 'jdbc:sqlite:');
+% Write.CreateCells_3D(conn,newCell)
+
+%% Lever Connection
+ im = MicroscopeData.Reader('imageData',CONSTANTS.imageData, 'chanList',1, ...
+     'timeRange',[1 1],'outType','single','prompt',false);
+ sigma = 5;
+ type = "";
+ volume = dog3D(BScans_PRO, sigma, type);
+ idxPixels=find(bw);
+ imSize=size(bw);
+ bwn=zeros(imSize);
+ bwn(idxPixels)=1;
+ PAD=5;
+ % padd with extra zeros around the outside so our mesh covers boundaries
+ bpad = zeros(size(bwn)+10);
+ bpad(PAD+1:end-PAD,PAD+1:end-PAD,PAD+1:end-PAD)=bwn;
+ bwn = bpad;
+ % scale=[1,1,1];
+ scale=max(imSize)./imSize/8;
+ scale=max(min(scale,0.5),.01);
+ resize=round(scale.*size(bwn));
+ bwResize=imresize3(bwn,resize);
+ [faces,verts]=isosurface(bwResize,graythresh(bwResize));
+ if size(verts,1)<10
+    resize=round(2*scale.*size(bwn));
+    bwResize=imresize3(bwn,resize);
+    [faces,verts]=isosurface(bwResize,graythresh(bwResize));
+end
+norms = isonormals(bwResize,verts);
+% rescale verts back to 
+unscale=(size(bwn)./size(bwResize));
+% put unscale on x,y instead of r,c
+unscale=[unscale(2),unscale(1),unscale(3)];
+
+verts=(verts).*unscale-0.5*unscale;
+edges=Segment.MakeEdges(faces);
+ 
+% make edges and faces zero indexed
+edges=edges-1;
+faces=faces-1;
+
+% subtract extract for padding
+verts=verts-PAD;
+maxRad = verts-repmat(mean(verts,1),size(verts,1),1);
+maxRad=sum(abs(maxRad),2);
+maxRad=max(maxRad);
+newCell=[];
+newCell.time=datetime('now');
+newCell.centroid=[mean(verts,1)]-1;
+newCell.edges=edges;
+newCell.faces=faces;
+newCell.verts=verts;
+newCell.normals=norms;
+xyzPts=[];
+% note that xyzPts are on the correct range, as idxPixels is unpadded...
+[xyzPts(:,2),xyzPts(:,1),xyzPts(:,3)]=ind2sub(imSize,idxPixels);
+
+newCell.pts=uint16(xyzPts);
+newCell.maxRadius=maxRad;
+newCell.channel=1;
+
+strDB = 'D:\Yoan\DukeOCT\DME\DME1.LEVER';
+AddSQLiteToPath();
+conn = database(strDB, '','', 'org.sqlite.JDBC', 'jdbc:sqlite:');
+Write.CreateCells_3D(conn,newCell)
+%%
+im = MicroscopeData.Reader('imageData',CONSTANTS.imageData, 'chanList',1, ...
+    'timeRange',[1 1],'outType','single','prompt',false);
+bw = im * 0;
+
+pts1 = round(icll);
+pts2 = round(ipll);
+pts3 = round(infl);
+pts4 = round(opll);
+pts5 = round(rpe);
+
+for i = 1:size(pts1, 2)
+    for ii = 1:size(pts1, 1)
+        bw(pts1(ii, i),i,ii) = 1;
+        bw(pts2(ii, i),i,ii) = 2;
+        bw(pts3(ii, i),i,ii) = 3;
+        bw(pts4(ii, i),i,ii) = 4;
+        bw(pts5(ii, i),i,ii) = 5;
+    end
+% 2d view
+end
+figure; imagesc(any(bw,3));
+lm=multithresh(im,5);
+
+q=imquantize(im,lm);
+
+bw=logical(bw);
+
+
+
+CC = bwconncomp(bw);
+
+[L num]=bwlabeln(bw);
+
+
+ 
+
+Cells=[];
+
+for n=1:num
+    idxPixels=find(L==n);
+    bwn=zeros(size(bw));
+    bwn(idxPixels)=1;
+    [faces,verts]=isosurface(bwn,graythresh(bwn));
+    norms = isonormals(bwn,verts);
+    edges=Segment.MakeEdges(faces);  
+    % make edges and faces zero indexed
+    edges=edges-1;
+    faces=faces-1;
+    maxRad = verts-repmat(mean(verts,1),size(verts,1),1);
+    maxRad=sum(abs(maxRad),2);
+    maxRad=max(maxRad);
+    newCell=[];
+    newCell.time=1;
+    newCell.centroid=[mean(verts,1)]-1;
+    newCell.edges=edges;
+    newCell.faces=faces;
+    newCell.verts=verts;
+    newCell.normals=norms;
+    xyzPts=[];
+    % note that xyzPts are on the correct range, as idxPixels is unpadded...
+    [xyzPts(:,2),xyzPts(:,1),xyzPts(:,3)]=ind2sub(size(bw),idxPixels);
+    newCell.pts=uint16(xyzPts);
+    newCell.maxRadius=maxRad;
+    newCell.channel=1;
+    Cells=[Cells;newCell];
+end
+Write.CreateCells_3D(conn,Cells);
 %% Process all 3D volumetric images and acquire all layers
 if(exist('./volumetricData/volumetricData.mat'))
     volumetricData = load('./volumetricData/volumetricData.mat');

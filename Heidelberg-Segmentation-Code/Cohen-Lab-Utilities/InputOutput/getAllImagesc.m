@@ -75,6 +75,10 @@ for i=1:numel(folder)
    %h5Converter(imagedirectory,v,folder(i).name);
 end
 
+Data_NORM = Data_NORM(~cellfun('isempty',Data_NORM));  
+Data_AMD = Data_AMD(~cellfun('isempty',Data_AMD));  
+Data_DME = Data_DME(~cellfun('isempty',Data_DME));  
+
 ImageData = [Data_NORM, Data_AMD, Data_DME];
 
 end
@@ -90,7 +94,7 @@ imagefilesPatient1 = dir(directory);
 nfiles = length(imagefilesPatient1);    % Number of files found
 images = [];
 directory = nfiles;
-
+imageset = {};
 for ii=1:nfiles
    currentfilename = imagefilesPatient1(ii).name;
    currentfolder = imagefilesPatient1(ii).folder;

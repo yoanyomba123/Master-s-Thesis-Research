@@ -27,6 +27,37 @@ for item = 1:length(line)
        line_output(lowerbound:upperbound) = ynew;
     end
 end
+
+line = fliplr(line_output);
+for item = 1:length(line)
+    upperbound = item + window_size;
+    lowerbound = item;
+    if( item + window_size <= length(line))
+       y_points = line(lowerbound:upperbound);
+       x_points = 1:length(y_points);
+       % fit polynomial to the line
+       [p, S, mu] = polyfit(x_points,y_points, polydegree);
+       % evaluate the fitted polynomial
+       [ynew, ~] = polyval(p, x_points, S, mu);
+       line_output(lowerbound:upperbound) = ynew;
+    end
+end
+line_output = fliplr(line_output);
+% for item = 1:length(line_output)
+%     upperbound = length(line_output) - window_size - item;
+%     lowerbound = length(line)-item;
+%     if( length(line_output) - window_size - item <= length(line_output))
+%        y_points = line(lowerbound:upperbound);
+%        x_points = 1:length(y_points);
+%        % fit polynomial to the line
+%        [p, S, mu] = polyfit(x_points,y_points, polydegree);
+%        % evaluate the fitted polynomial
+%        [ynew, ~] = polyval(p, x_points, S, mu);
+%        line_outputs(lowerbound:upperbound) = ynew;
+%     end
+% end
+
+
 outputline = line_output;
 end
 

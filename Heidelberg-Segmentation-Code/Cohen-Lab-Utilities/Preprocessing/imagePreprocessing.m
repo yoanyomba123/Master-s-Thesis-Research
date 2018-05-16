@@ -1,49 +1,54 @@
-function result = imagePreprocessing(volume)
+function image = imagePreprocessing(volume, type, outliers)
 % performs some image preprocessing as well as align the image
 % input
 %   3D volumetric image stack
 % output
 %   filtered 3D volumetric image stack
-figure;
-PARAMETER_FILENAME = 'octseg.param';
-med_params = loadParameters('MEDLINELIN', PARAMETER_FILENAME);
-onh_params = loadParameters('ONH', PARAMETER_FILENAME);
-rpe_params = loadParameters('RPELIN', PARAMETER_FILENAME);
-bv_params = loadParameters('BV', PARAMETER_FILENAME);
-infl_params = loadParameters('INFL', PARAMETER_FILENAME);
-inner_params = loadParameters('INNERLIN', PARAMETER_FILENAME);
-onfl_params = loadParameters('ONFLLIN', PARAMETER_FILENAME);
+    PARAMETER_FILENAME = 'octseg.param';
+    med_params = loadParameters('MEDLINELIN', PARAMETER_FILENAME);
+    onh_params = loadParameters('ONH', PARAMETER_FILENAME);
+    rpe_params = loadParameters('RPELIN', PARAMETER_FILENAME);
+    bv_params = loadParameters('BV', PARAMETER_FILENAME);
+    infl_params = loadParameters('INFL', PARAMETER_FILENAME);
+    inner_params = loadParameters('INNERLIN', PARAMETER_FILENAME);
+    onfl_params = loadParameters('ONFLLIN', PARAMETER_FILENAME);
+    if(type ~= "Complex")
+       image = medfilt3(volume, [5,5,5], 'zeros') - imgaussfilt3(volume,100);
+    else
+        for l = 1: size(volume, 3)
+            % acquire image
+            I = volume(:,:,l);
 
-    for i = 1: size(volume, 3)
-        % acquire image
-        I = volume(:,:,i);
-        
-        % save another copy of the image for later use
-        I_copy = I;
-        
-        %I = imcrop(I, dimensions);
-        % Get rid of brigh tspot
-        I = removeOutliers(I, 3, "zero");
-        
-        % apply adaptive filtering
-        I = filterAdaptively(I);
-        
-        % perform minimal intensity suppression
-        [I, BW] = minimalIntensityExtraction(I);
-        
-        % perform further suppression based on CC analysis
-        I = removeSmallestCC(I, BW);
-        
-        % apply the LOG and CANNY filter to the image;
-        I = filterCannyLog(I, I_copy);
-        
-        % apply an intensity transformation to the image once again for
-        % contrast enhancement purposes
-        I = imadjust(I, [0.1, 0.9]);
-        
-        imshow(I);
-        drawnow; pause(1);
-        result(:,:,i) = I;
+            % save another copy of the image for later use
+            I_copy = I;
+
+            if(outliers == "remove")
+                % Get rid of brigh tspot
+                I = removeOutliers(I, 3, "zero");
+                image = I;
+            else
+                % Get rid of brigh tspot
+                I = removeOutliers(I, 3, "zero");
+                
+                % apply adaptive filtering
+                I = filterAdaptively(I);
+
+                % perform minimal intensity suppression
+                [I, BW] = minimalIntensityExtraction(I);
+
+                % perform further suppression based on CC analysis
+                I = removeSmallestCC(I, BW);
+
+                % apply the LOG and CANNY filter to the image;
+                I = filterCannyLog(I, I_copy);
+
+                % apply an intensity transformation to the image once again for
+                % contrast enhancement purposes
+                %I = imadjust(I, [0.1, 0.9]);
+                I = medfilt2(I, [3,3]);
+                image(:,:,l) = I;
+            end
+        end
     end
 
 
@@ -113,7 +118,7 @@ onfl_params = loadParameters('ONFLLIN', PARAMETER_FILENAME);
        % apply some morphological operation (dilation) to introduce a
        % greater amount of spcae between the two OCT sub structures
        % open mostly in the y direction for maximal vertical spacing
-       BW = imopen(BW, ones(2, 4));
+       BW = imopen(BW, ones(2, 3));
        
        % find all points in the curretn black and white image that are of
        % magnitude 0 and set those current point in the image under
