@@ -1,4 +1,9 @@
-# Master's Thesis Research Work
+# D Yoan Yomba: Master-Thesis Work
 
-1. OCT Segmentation Scripts
 
+
+## Culmination of work done to satisfy master's thesis requirement
+   
+   1. Code
+   2. Books
+   3. Notes
