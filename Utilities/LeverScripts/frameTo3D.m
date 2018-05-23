@@ -9,7 +9,7 @@ bpad = zeros(size(bwn)+10);
 bpad(PAD+1:end-PAD,PAD+1:end-PAD,PAD+1:end-PAD)=bwn;
 bwn = bpad;
 % scale=[1,1,1];
-scale=max(imSize)./imSize/8;
+scale=max(imSize)./imSize/5;
 scale=max(min(scale,0.5),.01);
 %
 resize=round(scale.*size(bwn));

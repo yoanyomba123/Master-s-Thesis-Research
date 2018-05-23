@@ -6,6 +6,7 @@ function volumeToH5(volume,DatasetName, path_name)
     % database. PATH_NAME is the folder path to which .h5 files will be
     % written to
     imd = MicroscopeData.MakeMetadataFromImage(volume);
+%     imd.ChannelNames = channelnames;
     imd.DatasetName = DatasetName;
     if (size(imd.Dimensions,2)~=3)
         imd.Dimensions=[imd.Dimensions 1];

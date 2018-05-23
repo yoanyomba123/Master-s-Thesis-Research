@@ -22,13 +22,13 @@ if (exist('volumetricData\volumetricData.mat'))
 end
 
 %%
-specified_path = 'D:\Yoan\DATA';
+specified_path = 'D:\Yoan\SET';
 
-for i = 1 : size(BScans_stack, 2)
+for i = 1 : size(BScans_stack, 2)   
     for j = 1: size(BScans_stack, 1)
         image_vol = BScans_stack{j, i};
         % pre-process the image
-        BScans_stack{j, i} = imagePreprocessing(image_vol, "Complex", "");
+        %BScans_stack{j, i} = imagePreprocessing(image_vol, "Complex", "");
         if(i == 1)
             path_ext = "\AMD\";
             vol_name = strcat("AMD", num2str(j));

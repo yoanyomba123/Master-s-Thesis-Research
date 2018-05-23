@@ -7,7 +7,7 @@ function volume = dog3D(vol, sigma, type)
 % Input: 3D Volumetric Stack & Sigma
 % Output: 3D Volumetric Stack
 if nargin < 2
-    sigma = 5;
+%     sigma = 5;
     type = "";
 end
 

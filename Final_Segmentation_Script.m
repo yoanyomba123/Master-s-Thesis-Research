@@ -354,9 +354,10 @@ border = 255*ones(size(temp_image,1),5);
 % specify image dimensions for screen capture
 image_dimensions = [1.51, 0.51, 1.008, 0.4790];
 
+BScans_stack = imagedb.BScans_stack;
 w_s = 100;
 degree = 5;
-for i = 2:2%size(inflines,2)
+for i = 3:3%size(inflines,2)
     for j = 1:9%size(inflines, 1)
         % specify image path
         switch(i)
@@ -424,7 +425,7 @@ for i = 2:2%size(inflines,2)
             drawnow
             
             % take a screen capture of our images
-            % screencapture(gcf,[], 'target', filename);
+            screencapture(gcf,[], 'target', filename);
         end 
     end
 end
