@@ -12,12 +12,6 @@ Bscans_UF = BScans_stack{6,1};
 I = BScans_UF(:,:,41);
 Iz = I;
 
-
-
-
-
-
-
 %%
 % remove any image outliers
 I_t = I== 1;
