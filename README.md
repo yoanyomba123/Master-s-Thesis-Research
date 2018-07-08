@@ -19,3 +19,9 @@
 
     For Installation steps, please visit
         git-bioimage.coe.drexel.edu/opensource/leverjs
+
+## To Run
+    ### run.m
+        Must have OCT tif files on local workspace. Change the specified path on the first line in run.m. 
+    ### All other Scripts in main folder
+        Must install lever js and all needed dependencies prior to properly running the script
